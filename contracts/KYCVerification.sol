@@ -1,34 +1,46 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.24;
 
 contract KYCVerification {
 
     address public admin;
-
-    struct KYCRecord {
-        string kycHash;
-        bool isVerified;
-    }
-
-    mapping(address => KYCRecord) private kycRecords;
 
     constructor() {
         admin = msg.sender;
     }
 
     modifier onlyAdmin() {
-        require(msg.sender == admin, "Not authorized");
+        require(msg.sender == admin, "Not admin");
         _;
     }
 
-    function storeKYC(address user, string memory _kycHash) public onlyAdmin {
-        kycRecords[user] = KYCRecord(_kycHash, true);
+    struct KYCRequest {
+        string name;
+        string documentHash; // IPFS or document hash
+        bool verified;
     }
 
-    function verifyKYC(address user, string memory _kycHash) public view returns (bool) {
-        return (
-            keccak256(bytes(kycRecords[user].kycHash)) == keccak256(bytes(_kycHash)) &&
-            kycRecords[user].isVerified
-        );
+    mapping(address => KYCRequest) public kycRequests;
+
+    function submitKYC(string memory _name, string memory _docHash) public {
+        kycRequests[msg.sender] = KYCRequest({
+            name: _name,
+            documentHash: _docHash,
+            verified: false
+        });
+    }
+
+    function approveKYC(address user) public onlyAdmin {
+        require(bytes(kycRequests[user].name).length > 0, "KYC not submitted");
+        kycRequests[user].verified = true;
+    }
+
+    function isVerified(address user) public view returns (bool) {
+        return kycRequests[user].verified;
+    }
+
+    function getKYCDetails(address user) public view returns (string memory, string memory, bool) {
+        KYCRequest memory kyc = kycRequests[user];
+        return (kyc.name, kyc.documentHash, kyc.verified);
     }
 }
