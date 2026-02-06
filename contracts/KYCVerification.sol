@@ -15,32 +15,38 @@ contract KYCVerification {
     }
 
     struct KYCRequest {
-        string name;
-        string documentHash; // IPFS or document hash
+        bytes32 dataHash;   // cryptographic hash of KYC data
         bool verified;
     }
 
     mapping(address => KYCRequest) public kycRequests;
 
-    function submitKYC(string memory _name, string memory _docHash) public {
+    // 🔔 Events (you forgot to declare these earlier)
+    event KYCSubmitted(address indexed user, bytes32 dataHash);
+    event KYCApproved(address indexed user);
+
+    function submitKYC(bytes32 _dataHash) public {
         kycRequests[msg.sender] = KYCRequest({
-            name: _name,
-            documentHash: _docHash,
+            dataHash: _dataHash,
             verified: false
         });
+
+        emit KYCSubmitted(msg.sender, _dataHash);
     }
 
     function approveKYC(address user) public onlyAdmin {
-        require(bytes(kycRequests[user].name).length > 0, "KYC not submitted");
+        require(kycRequests[user].dataHash != 0, "KYC not submitted");
         kycRequests[user].verified = true;
+
+        emit KYCApproved(user);
     }
 
     function isVerified(address user) public view returns (bool) {
         return kycRequests[user].verified;
     }
 
-    function getKYCDetails(address user) public view returns (string memory, string memory, bool) {
+    function getKYCDetails(address user) public view returns (bytes32, bool) {
         KYCRequest memory kyc = kycRequests[user];
-        return (kyc.name, kyc.documentHash, kyc.verified);
+        return (kyc.dataHash, kyc.verified);
     }
 }

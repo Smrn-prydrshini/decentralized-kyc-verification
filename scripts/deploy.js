@@ -11,9 +11,15 @@ async function main() {
   console.log("Admin address:", admin.address);
   console.log("User address:", user.address);
 
-  // User submits KYC
-  await contract.connect(user).submitKYC("Simran", "QmFakeIPFSHash123");
-  console.log("User submitted KYC");
+  // 🔐 Simulated KYC data (this would normally be user documents)
+  const userKYCData = "Name: Simran | Aadhaar: 1234 | PAN: ABCD1234";
+  const dataHash = hre.ethers.keccak256(hre.ethers.toUtf8Bytes(userKYCData));
+
+  console.log("Generated KYC Hash:", dataHash);
+
+  // User submits hash
+  await contract.connect(user).submitKYC(dataHash);
+  console.log("User submitted KYC hash");
 
   // Admin approves
   await contract.connect(admin).approveKYC(user.address);
@@ -23,9 +29,9 @@ async function main() {
   const status = await contract.isVerified(user.address);
   console.log("Is user verified?", status);
 
-  // Fetch stored details
+  // Fetch stored data
   const details = await contract.getKYCDetails(user.address);
-  console.log("Stored KYC Data:", details);
+  console.log("Stored On-Chain Data (Hash, Verified):", details);
 }
 
 main().catch((error) => {
