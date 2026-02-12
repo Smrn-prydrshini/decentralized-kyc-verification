@@ -21,7 +21,7 @@ contract KYCVerification {
 
     mapping(address => KYCRequest) public kycRequests;
 
-    // 🔔 Events (you forgot to declare these earlier)
+    // Events
     event KYCSubmitted(address indexed user, bytes32 dataHash);
     event KYCApproved(address indexed user);
 
